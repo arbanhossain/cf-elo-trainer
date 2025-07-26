@@ -6,9 +6,10 @@ import { HiOutlineCode as CodeIcon, HiOutlineUserCircle as UserIcon, HiOutlineCo
 interface HeaderProps {
     user: User | null;
     onNavigateToSettings: () => void;
+    onNavigateToFAQ: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onNavigateToSettings }) => {
+const Header: React.FC<HeaderProps> = ({ user, onNavigateToSettings, onNavigateToFAQ }) => {
     return (
         <header className="bg-gray-800/50 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-gray-700/50">
             <div className="container mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
@@ -32,6 +33,9 @@ const Header: React.FC<HeaderProps> = ({ user, onNavigateToSettings }) => {
                             </div>
                         </div>
                     )}
+                    <button onClick={onNavigateToFAQ} className="p-2 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors text-sm font-semibold text-gray-300">
+                        FAQ
+                    </button>
                     <button onClick={onNavigateToSettings} className="p-2 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors">
                         <SettingsIcon className="h-6 w-6 text-gray-300" />
                     </button>

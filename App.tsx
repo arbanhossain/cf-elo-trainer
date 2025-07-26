@@ -4,9 +4,10 @@ import { useCodeforcesData } from './hooks/useCodeforcesData';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
+import FAQ from './components/FAQ';
 import { HiOutlineRefresh as LoadingIcon } from 'react-icons/hi';
 
-type Page = 'dashboard' | 'settings';
+type Page = 'dashboard' | 'settings' | 'faq';
 
 import { useEffect } from 'react';
 import * as codeforcesService from './services/codeforcesService';
@@ -40,7 +41,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-      <Header user={user} onNavigateToSettings={() => setPage('settings')} />
+      <Header 
+        user={user} 
+        onNavigateToSettings={() => setPage('settings')} 
+        onNavigateToFAQ={() => setPage('faq')} 
+      />
       <main className="container mx-auto p-4 md:p-8">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -63,13 +68,17 @@ const App: React.FC = () => {
               setPreferredTags={setPreferredTags}
               allProblems={allProblems}
             />
-          ) : (
+          ) : page === 'settings' ? (
             <Settings 
               user={user}
               onUpdateUser={handleUpdateUser}
               onReset={handleReset} 
               onNavigateBack={() => setPage('dashboard')}
               error={error}
+            />
+          ) : ( // This must be 'faq'
+            <FAQ
+              onNavigateBack={() => setPage('dashboard')}
             />
           )
         ) : (
