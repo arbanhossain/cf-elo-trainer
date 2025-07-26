@@ -1,0 +1,5 @@
+{
+  "name": "Codeforces ELO Trainer",
+  "description": "A web application to recommend Codeforces problems based on a custom ELO rating and track your progress. Get personalized problem sets to improve your competitive programming skills.",
+  "requestFramePermissions": []
+}
