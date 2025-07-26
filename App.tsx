@@ -4,7 +4,7 @@ import { useCodeforcesData } from './hooks/useCodeforcesData';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
-import { LoadingIcon } from './components/icons';
+import { HiOutlineRefresh as LoadingIcon } from 'react-icons/hi';
 
 type Page = 'dashboard' | 'settings';
 
@@ -26,10 +26,10 @@ const App: React.FC = () => {
     setPage('dashboard');
   };
 
-  const handleUpdateUser = async (username: string, cfHandle: string) => {
+  const handleUpdateUser = async (username: string, cfHandle: string, elo?: number) => {
     if (updateUser) {
       try {
-        await updateUser(username, cfHandle);
+        await updateUser(username, cfHandle, elo);
         setPage('dashboard');
       } catch (e) {
         // Error is already set in the hook, just need to prevent navigation

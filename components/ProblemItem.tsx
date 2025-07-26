@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Problem, Attempt } from '../types';
 import SubmitAttemptForm from './SubmitAttemptForm';
 import { getHint } from '../services/geminiService';
-import { LinkIcon, CheckCircleIcon, XCircleIcon, SparklesIcon, LoadingIcon } from './icons';
+import { HiOutlineLink as LinkIcon, HiOutlineCheckCircle as CheckCircleIcon, HiOutlineXCircle as XCircleIcon, HiOutlineSparkles as SparklesIcon, HiOutlineRefresh as LoadingIcon } from 'react-icons/hi';
 
 interface ProblemItemProps {
     problem: Problem;

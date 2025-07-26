@@ -82,9 +82,9 @@ export const useCodeforcesData = () => {
     await fetchInitialData();
   };
 
-  const updateUser = async (username: string, cfHandle: string) => {
+  const updateUser = async (username: string, cfHandle: string, elo?: number) => {
     try {
-      await codeforcesService.updateUser(username, cfHandle);
+      await codeforcesService.updateUser(username, cfHandle, elo);
       await fetchInitialData();
     } catch (e) {
       if (e instanceof Error) {

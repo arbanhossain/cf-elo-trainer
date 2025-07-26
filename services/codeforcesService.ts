@@ -238,16 +238,20 @@ export const submitAttempt = async (
     return simulateDelay({ updatedUser, newAttempt });
 };
 
-export const updateUser = async (username: string, cfHandle: string): Promise<User> => {
+export const updateUser = async (username: string, cfHandle: string, elo?: number): Promise<User> => {
     const userStr = localStorage.getItem(USER_STORAGE_KEY);
     let user: User = userStr ? JSON.parse(userStr) : { id: 1, username: 'Gamer123', currentElo: 1500 };
     
     user.username = username;
-    user.cfHandle = cfHandle;
-
+    
     if (cfHandle) {
         const cfData = await getCFUserInfo(cfHandle);
-        user = { ...user, ...cfData };
+        user = { ...user, cfHandle, ...cfData };
+    } else {
+        delete user.cfHandle;
+        if (elo !== undefined) {
+            user.currentElo = elo;
+        }
     }
     
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));

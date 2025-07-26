@@ -3,7 +3,7 @@ import { User } from '../types';
 
 interface SettingsProps {
   user: User;
-  onUpdateUser: (username: string, cfHandle: string) => Promise<void>;
+  onUpdateUser: (username: string, cfHandle: string, elo?: number) => Promise<void>;
   onReset: () => void;
   onNavigateBack: () => void;
   error: string | null;
@@ -12,6 +12,7 @@ interface SettingsProps {
 const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavigateBack, error }) => {
   const [username, setUsername] = useState(user.username);
   const [cfHandle, setCfHandle] = useState(user.cfHandle || '');
+  const [elo, setElo] = useState(user.currentElo);
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -19,7 +20,24 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
     setIsSaving(true);
     setLocalError(null);
     try {
-      await onUpdateUser(username, cfHandle);
+      await onUpdateUser(username, cfHandle, elo);
+    } catch (e) {
+      if (e instanceof Error) {
+        setLocalError(e.message);
+      } else {
+        setLocalError('An unknown error occurred.');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUnlink = async () => {
+    setIsSaving(true);
+    setLocalError(null);
+    try {
+      await onUpdateUser(username, '', elo);
+      setCfHandle('');
     } catch (e) {
       if (e instanceof Error) {
         setLocalError(e.message);
@@ -58,14 +76,36 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
             />
           </div>
           <div>
-            <label htmlFor="cfHandle" className="block text-sm font-medium text-gray-400">Codeforces Handle (optional)</label>
+            <label htmlFor="elo" className="block text-sm font-medium text-gray-400">ELO Rating</label>
             <input
-              type="text"
-              id="cfHandle"
-              value={cfHandle}
-              onChange={(e) => setCfHandle(e.target.value)}
-              className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+              type="number"
+              id="elo"
+              value={elo}
+              onChange={(e) => setElo(parseInt(e.target.value, 10))}
+              disabled={!!cfHandle}
+              className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-50"
             />
+            {cfHandle && <p className="mt-2 text-xs text-gray-500">ELO is synced from Codeforces.</p>}
+          </div>
+          <div>
+            <label htmlFor="cfHandle" className="block text-sm font-medium text-gray-400">Codeforces Handle (optional)</label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                id="cfHandle"
+                value={cfHandle}
+                onChange={(e) => setCfHandle(e.target.value)}
+                className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+              />
+              {user.cfHandle && (
+                <button
+                  onClick={handleUnlink}
+                  className="mt-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300"
+                >
+                  Unlink
+                </button>
+              )}
+            </div>
             <p className="mt-2 text-xs text-gray-500">Link your Codeforces account to sync your rating and submission history.</p>
           </div>
         </div>

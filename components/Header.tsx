@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User } from '../types';
-import { CodeIcon, UserIcon, SettingsIcon } from './icons';
+import { HiOutlineCode as CodeIcon, HiOutlineUserCircle as UserIcon, HiOutlineCog as SettingsIcon } from 'react-icons/hi';
 
 interface HeaderProps {
     user: User | null;
