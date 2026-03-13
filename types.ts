@@ -4,6 +4,7 @@ export interface User {
     username: string;
     currentElo: number;
     cfHandle?: string;
+    allowManualSubmit?: boolean;
 }
 
 export interface Problem {

@@ -52,7 +52,7 @@ export const getCFUserInfo = async (handle: string): Promise<Partial<User>> => {
     const data = await response.json();
     if (data.status !== 'OK') throw new Error(data.comment);
     const cfUser = data.result[0];
-    return { currentElo: cfUser.rating, username: cfUser.handle };
+    return { currentElo: cfUser.rating ?? 1500, username: cfUser.handle };
 };
 
 export const getCFUserSubmissions = async (handle: string): Promise<Attempt[]> => {
@@ -210,8 +210,8 @@ export const submitAttempt = async (
     attemptsCount: number,
     isSuccessful: boolean
 ): Promise<{ updatedUser: User, newAttempt: Attempt }> => {
-    if (user.cfHandle) {
-        throw new Error("Cannot manually submit attempts for a linked Codeforces account.");
+    if (user.cfHandle && !user.allowManualSubmit) {
+        throw new Error("Cannot manually submit attempts for a linked Codeforces account without enabling the option.");
     }
 
     const eloChange = calculateEloChange(user.currentElo, problem.rating, attemptsCount, isSuccessful);
@@ -238,7 +238,7 @@ export const submitAttempt = async (
     return simulateDelay({ updatedUser, newAttempt });
 };
 
-export const updateUser = async (username: string, cfHandle: string, elo?: number): Promise<User> => {
+export const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean): Promise<User> => {
     const userStr = localStorage.getItem(USER_STORAGE_KEY);
     let user: User = userStr ? JSON.parse(userStr) : { id: 1, username: 'Gamer123', currentElo: 1500 };
     
@@ -253,6 +253,10 @@ export const updateUser = async (username: string, cfHandle: string, elo?: numbe
             user.currentElo = elo;
         }
     }
+
+    if (allowManualSubmit !== undefined) {
+        user.allowManualSubmit = allowManualSubmit;
+    }
     
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
     return simulateDelay(user);
@@ -262,4 +266,21 @@ export const resetProgress = (): Promise<void> => {
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem(HISTORY_STORAGE_KEY);
     return simulateDelay(undefined);
+};
+
+export const exportData = (): string => {
+    const userStr = localStorage.getItem(USER_STORAGE_KEY);
+    const historyStr = localStorage.getItem(HISTORY_STORAGE_KEY);
+    return JSON.stringify({ user: userStr, history: historyStr });
+};
+
+export const importData = (jsonData: string): Promise<void> => {
+    try {
+        const data = JSON.parse(jsonData);
+        if (data.user) localStorage.setItem(USER_STORAGE_KEY, data.user);
+        if (data.history) localStorage.setItem(HISTORY_STORAGE_KEY, data.history);
+        return simulateDelay(undefined);
+    } catch (e) {
+        throw new Error("Invalid data format.");
+    }
 };

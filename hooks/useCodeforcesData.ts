@@ -82,9 +82,27 @@ export const useCodeforcesData = () => {
     await fetchInitialData();
   };
 
-  const updateUser = async (username: string, cfHandle: string, elo?: number) => {
+  const importData = async (jsonData: string) => {
     try {
-      await codeforcesService.updateUser(username, cfHandle, elo);
+      await codeforcesService.importData(jsonData);
+      await fetchInitialData();
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError('Failed to import data.');
+      }
+      throw e;
+    }
+  };
+
+  const exportData = () => {
+    return codeforcesService.exportData();
+  };
+
+  const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => {
+    try {
+      await codeforcesService.updateUser(username, cfHandle, elo, allowManualSubmit);
       await fetchInitialData();
     } catch (e) {
       if (e instanceof Error) {
@@ -96,5 +114,5 @@ export const useCodeforcesData = () => {
     }
   };
 
-  return { user, recommendations, history, isLoading, error, submitAttempt, reset, updateUser, preferredTags, setPreferredTags };
+  return { user, recommendations, history, isLoading, error, submitAttempt, reset, updateUser, preferredTags, setPreferredTags, importData, exportData };
 };

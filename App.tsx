@@ -14,7 +14,7 @@ import * as codeforcesService from './services/codeforcesService';
 import { Problem } from './types';
 
 const App: React.FC = () => {
-  const { user, recommendations, history, isLoading, error, submitAttempt, reset, updateUser, preferredTags, setPreferredTags } = useCodeforcesData();
+  const { user, recommendations, history, isLoading, error, submitAttempt, reset, updateUser, preferredTags, setPreferredTags, importData, exportData } = useCodeforcesData();
   const [page, setPage] = useState<Page>('dashboard');
   const [allProblems, setAllProblems] = useState<Problem[]>([]);
 
@@ -27,10 +27,10 @@ const App: React.FC = () => {
     setPage('dashboard');
   };
 
-  const handleUpdateUser = async (username: string, cfHandle: string, elo?: number) => {
+  const handleUpdateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => {
     if (updateUser) {
       try {
-        await updateUser(username, cfHandle, elo);
+        await updateUser(username, cfHandle, elo, allowManualSubmit);
         setPage('dashboard');
       } catch (e) {
         // Error is already set in the hook, just need to prevent navigation
@@ -75,6 +75,8 @@ const App: React.FC = () => {
               onReset={handleReset} 
               onNavigateBack={() => setPage('dashboard')}
               error={error}
+              onImportData={importData}
+              onExportData={exportData}
             />
           ) : ( // This must be 'faq'
             <FAQ

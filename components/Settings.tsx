@@ -3,16 +3,19 @@ import { User } from '../types';
 
 interface SettingsProps {
   user: User;
-  onUpdateUser: (username: string, cfHandle: string, elo?: number) => Promise<void>;
+  onUpdateUser: (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => Promise<void>;
   onReset: () => void;
   onNavigateBack: () => void;
   error: string | null;
+  onImportData?: (jsonData: string) => Promise<void>;
+  onExportData?: () => string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavigateBack, error }) => {
+const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavigateBack, error, onImportData, onExportData }) => {
   const [username, setUsername] = useState(user.username);
   const [cfHandle, setCfHandle] = useState(user.cfHandle || '');
   const [elo, setElo] = useState(user.currentElo);
+  const [allowManualSubmit, setAllowManualSubmit] = useState(user.allowManualSubmit || false);
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -20,7 +23,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
     setIsSaving(true);
     setLocalError(null);
     try {
-      await onUpdateUser(username, cfHandle, elo);
+      await onUpdateUser(username, cfHandle, elo, allowManualSubmit);
     } catch (e) {
       if (e instanceof Error) {
         setLocalError(e.message);
@@ -36,7 +39,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
     setIsSaving(true);
     setLocalError(null);
     try {
-      await onUpdateUser(username, '', elo);
+      await onUpdateUser(username, '', elo, allowManualSubmit);
       setCfHandle('');
     } catch (e) {
       if (e instanceof Error) {
@@ -52,6 +55,36 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all your progress? This action cannot be undone.')) {
       onReset();
+    }
+  };
+
+  const handleExport = () => {
+    if (onExportData) {
+      const data = onExportData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cf_elo_data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImportData) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const content = event.target?.result as string;
+          await onImportData(content);
+          alert('Data imported successfully!');
+        } catch (err) {
+          alert('Failed to import data: Invalid format.');
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -108,6 +141,20 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
             </div>
             <p className="mt-2 text-xs text-gray-500">Link your Codeforces account to sync your rating and submission history.</p>
           </div>
+          {cfHandle && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="allowManualSubmit"
+                checked={allowManualSubmit}
+                onChange={(e) => setAllowManualSubmit(e.target.checked)}
+                className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded bg-gray-700"
+              />
+              <label htmlFor="allowManualSubmit" className="ml-2 block text-sm text-gray-400">
+                Allow manual submission of attempts (this won't sync back to Codeforces)
+              </label>
+            </div>
+          )}
         </div>
         <div className="mt-6">
           <button
@@ -120,6 +167,27 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
           {(error || localError) && (
             <p className="text-red-400 mt-4">{error || localError}</p>
           )}
+        </div>
+      </div>
+
+      <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+        <h3 className="text-xl font-semibold text-gray-200 mb-4">Data Management</h3>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleExport}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300"
+          >
+            Export Data
+          </button>
+          <label className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300 cursor-pointer">
+            Import Data
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+            />
+          </label>
         </div>
       </div>
 
