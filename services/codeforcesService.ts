@@ -46,13 +46,45 @@ export const getProblemset = async (): Promise<Problem[]> => {
 
 const simulateDelay = <T,>(data: T): Promise<T> => new Promise(resolve => setTimeout(() => resolve(data), 300));
 
-export const getCFUserInfo = async (handle: string): Promise<Partial<User>> => {
+export const getCFUserInfo = async (handle: string, generateEloFromHistory: boolean = false): Promise<Partial<User>> => {
     const response = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
     if (!response.ok) throw new Error('Failed to fetch user info from Codeforces');
     const data = await response.json();
     if (data.status !== 'OK') throw new Error(data.comment);
     const cfUser = data.result[0];
-    return { currentElo: cfUser.rating ?? 1500, username: cfUser.handle };
+
+    let currentElo = cfUser.rating;
+
+    if (generateEloFromHistory || currentElo === undefined) {
+        try {
+            const submissions = await getCFUserSubmissions(handle);
+            if (submissions.length > 0) {
+                // Generate ELO based on average rating of solved problems
+                const solvedRatings = submissions
+                    .map(sub => sub.problem.rating)
+                    .filter(rating => rating !== undefined && !isNaN(rating));
+                
+                if (solvedRatings.length > 0) {
+                    const avgRating = solvedRatings.reduce((a, b) => a + b, 0) / solvedRatings.length;
+                    // Slightly adjust the average or use it directly
+                    currentElo = Math.round(avgRating);
+                } else {
+                    currentElo = 1500; // No rated problems solved
+                }
+            } else {
+                currentElo = 1500; // No submissions
+            }
+        } catch (e) {
+            console.error("Failed to generate ELO from history:", e);
+            // Fallback to CF rating if it exists, otherwise 1500
+            currentElo = cfUser.rating ?? 1500;
+        }
+    } else {
+        // Use CF Rating when not explicitly generating from history
+        currentElo = currentElo ?? 1500;
+    }
+
+    return { currentElo, username: cfUser.handle };
 };
 
 export const getCFUserSubmissions = async (handle: string): Promise<Attempt[]> => {
@@ -97,7 +129,7 @@ export const getInitialUser = async (): Promise<User> => {
 
     if (user.cfHandle) {
         try {
-            const cfData = await getCFUserInfo(user.cfHandle);
+            const cfData = await getCFUserInfo(user.cfHandle, user.generateEloFromHistory);
             user = { ...user, ...cfData };
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
         } catch (e) {
@@ -148,10 +180,12 @@ export const getRecommendations = async (userElo: number, preferredTags: string[
     const fillFrom = (source: Problem[], count: number, isTagged: boolean) => {
         const shuffled = source.sort(() => 0.5 - Math.random());
         const available = shuffled.filter(p => !recommendations.some(r => r.id === p.id));
-        const toAdd = available.slice(0, count);
-        if (!isTagged) {
-            toAdd.forEach(p => p.isOutOfCategory = true);
-        }
+        const toAdd = available.slice(0, count).map(p => {
+            if (!isTagged) {
+                return { ...p, isOutOfCategory: true };
+            }
+            return p;
+        });
         recommendations.push(...toAdd);
     };
 
@@ -238,14 +272,14 @@ export const submitAttempt = async (
     return simulateDelay({ updatedUser, newAttempt });
 };
 
-export const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean): Promise<User> => {
+export const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean, generateEloFromHistory?: boolean): Promise<User> => {
     const userStr = localStorage.getItem(USER_STORAGE_KEY);
     let user: User = userStr ? JSON.parse(userStr) : { id: 1, username: 'Gamer123', currentElo: 1500 };
     
     user.username = username;
     
     if (cfHandle) {
-        const cfData = await getCFUserInfo(cfHandle);
+        const cfData = await getCFUserInfo(cfHandle, generateEloFromHistory);
         user = { ...user, cfHandle, ...cfData };
     } else {
         delete user.cfHandle;
@@ -256,6 +290,10 @@ export const updateUser = async (username: string, cfHandle: string, elo?: numbe
 
     if (allowManualSubmit !== undefined) {
         user.allowManualSubmit = allowManualSubmit;
+    }
+
+    if (generateEloFromHistory !== undefined) {
+        user.generateEloFromHistory = generateEloFromHistory;
     }
     
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));

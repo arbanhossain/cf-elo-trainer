@@ -100,9 +100,9 @@ export const useCodeforcesData = () => {
     return codeforcesService.exportData();
   };
 
-  const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => {
+  const updateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean, generateEloFromHistory?: boolean) => {
     try {
-      await codeforcesService.updateUser(username, cfHandle, elo, allowManualSubmit);
+      await codeforcesService.updateUser(username, cfHandle, elo, allowManualSubmit, generateEloFromHistory);
       await fetchInitialData();
     } catch (e) {
       if (e instanceof Error) {

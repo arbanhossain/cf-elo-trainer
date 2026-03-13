@@ -3,7 +3,7 @@ import { User } from '../types';
 
 interface SettingsProps {
   user: User;
-  onUpdateUser: (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => Promise<void>;
+  onUpdateUser: (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean, generateEloFromHistory?: boolean) => Promise<void>;
   onReset: () => void;
   onNavigateBack: () => void;
   error: string | null;
@@ -16,6 +16,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
   const [cfHandle, setCfHandle] = useState(user.cfHandle || '');
   const [elo, setElo] = useState(user.currentElo);
   const [allowManualSubmit, setAllowManualSubmit] = useState(user.allowManualSubmit || false);
+  const [generateEloFromHistory, setGenerateEloFromHistory] = useState(user.generateEloFromHistory || false);
   const [isSaving, setIsSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -23,7 +24,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
     setIsSaving(true);
     setLocalError(null);
     try {
-      await onUpdateUser(username, cfHandle, elo, allowManualSubmit);
+      await onUpdateUser(username, cfHandle, elo, allowManualSubmit, generateEloFromHistory);
     } catch (e) {
       if (e instanceof Error) {
         setLocalError(e.message);
@@ -142,18 +143,39 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, onReset, onNavi
             <p className="mt-2 text-xs text-gray-500">Link your Codeforces account to sync your rating and submission history.</p>
           </div>
           {cfHandle && (
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="allowManualSubmit"
-                checked={allowManualSubmit}
-                onChange={(e) => setAllowManualSubmit(e.target.checked)}
-                className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded bg-gray-700"
-              />
-              <label htmlFor="allowManualSubmit" className="ml-2 block text-sm text-gray-400">
-                Allow manual submission of attempts (this won't sync back to Codeforces)
-              </label>
-            </div>
+            <>
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="generateEloFromHistory"
+                    checked={generateEloFromHistory}
+                    onChange={(e) => setGenerateEloFromHistory(e.target.checked)}
+                    className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded bg-gray-700"
+                  />
+                  <label htmlFor="generateEloFromHistory" className="ml-2 block text-sm text-gray-400">
+                    Generate ELO from past solved problems
+                  </label>
+                </div>
+                {generateEloFromHistory && (
+                  <p className="ml-6 text-xs text-yellow-500">
+                    (Your current Codeforces ELO rating will be ignored)
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="allowManualSubmit"
+                  checked={allowManualSubmit}
+                  onChange={(e) => setAllowManualSubmit(e.target.checked)}
+                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded bg-gray-700"
+                />
+                <label htmlFor="allowManualSubmit" className="ml-2 block text-sm text-gray-400">
+                  Allow manual submission of attempts (this won't sync back to Codeforces)
+                </label>
+              </div>
+            </>
           )}
         </div>
         <div className="mt-6">

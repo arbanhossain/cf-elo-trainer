@@ -5,6 +5,7 @@ export interface User {
     currentElo: number;
     cfHandle?: string;
     allowManualSubmit?: boolean;
+    generateEloFromHistory?: boolean;
 }
 
 export interface Problem {

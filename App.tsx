@@ -27,10 +27,10 @@ const App: React.FC = () => {
     setPage('dashboard');
   };
 
-  const handleUpdateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean) => {
+  const handleUpdateUser = async (username: string, cfHandle: string, elo?: number, allowManualSubmit?: boolean, generateEloFromHistory?: boolean) => {
     if (updateUser) {
       try {
-        await updateUser(username, cfHandle, elo, allowManualSubmit);
+        await updateUser(username, cfHandle, elo, allowManualSubmit, generateEloFromHistory);
         setPage('dashboard');
       } catch (e) {
         // Error is already set in the hook, just need to prevent navigation
